@@ -1,0 +1,22 @@
+{
+  "name": "cmm-trade-server",
+  "version": "1.0.0",
+  "description": "Serever side of the CMM Trade application",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DaniilOkrug/cmm-trade-server.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DaniilOkrug/cmm-trade-server/issues"
+  },
+  "homepage": "https://github.com/DaniilOkrug/cmm-trade-server#readme",
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  }
+}
