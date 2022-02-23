@@ -1,19 +1,20 @@
 const { validationResult } = require('express-validator');
 const ApiError = require('../exceptions/api.error');
 const userService = require('../service/user.service');
+const botService = require('../service/bot.service');
 
 class UserController {
     async registration(req, res, next) {
         try {
             const errors = validationResult(req);
-            if(!errors.isEmpty()) {
+            if (!errors.isEmpty()) {
                 return next(ApiError.BadRequest('Ошибка валидации', errors.array()));
             }
 
             const { email, password } = req.body;
             const userData = await userService.registration(email, password);
 
-            res.cookie('refreshToken', userData.refreshToken, {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true});
+            res.cookie('refreshToken', userData.refreshToken, { maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true });
 
             return res.json(userData);
         } catch (e) {
@@ -23,8 +24,7 @@ class UserController {
 
     async login(req, res, next) {
         try {
-            const {email, password} = req.body;
-            console.log(req.body);
+            const { email, password } = req.body;
             const userData = await userService.login(email, password);
 
             res.cookie('refreshToken', userData.refreshToken, { maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true });
@@ -72,7 +72,46 @@ class UserController {
     async getUsers(req, res, next) {
         try {
             const users = await userService.getAllUsers();
+
             return res.json(users);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async addApi(req, res, next) {
+        try {
+            const { key, secret, name, exchange } = req.body;
+            const { refreshToken } = req.cookies;
+
+            const response = await userService.addApi(key, secret, name, exchange, refreshToken);
+
+            return res.json(response);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async createBot(req, res, next) {
+        try {
+            const { pair, apiKey, deposit } = req.body;
+            const { refreshToken } = req.cookies;
+
+            const userBot = await userService.createBot(pair, apiKey, deposit, refreshToken);
+
+            return res.json(userBot);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async setBotSettings(req, res, next) {
+        try {
+            const { pairs, settings } = req.body;
+
+            const response = await botService.setBotSettigns(pairs, settings);
+
+            return res.json(response);
         } catch (e) {
             next(e);
         }

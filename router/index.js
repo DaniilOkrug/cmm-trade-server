@@ -13,6 +13,10 @@ router.post('/login', userController.login);
 router.post('/logout', userController.logout);
 router.get('/activate/:link', userController.activate);
 router.get('/refresh', userController.refresh);
+
+router.post('/addApi', authMiddleware, userController.addApi);
+router.post('/createBot', authMiddleware, userController.createBot);
 router.get('/users', authMiddleware, userController.getUsers);
+router.put('/setBotSettings', authMiddleware, userController.setBotSettings)
 
 module.exports = router;

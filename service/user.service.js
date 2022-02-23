@@ -1,10 +1,15 @@
 const UserModel = require("../models/user.model");
+const ApiModel = require("../models/api.model");
+const UserBotModel = require("../models/userBot.model");
+const BotModel = require("../models/bot.model");
+
 const bcrypt = require('bcrypt');
 const uuid = require('uuid');
 const mailService = require("./mail.service");
 const tokenService = require("./token.service");
 const UserDto = require("../dtos/user.dto");
 const ApiError = require('../exceptions/api.error');
+const req = require("express/lib/request");
 
 class UserService {
     async registration(email, password) {
@@ -55,7 +60,7 @@ class UserService {
         }
 
         const userDto = new UserDto(user);
-        const tokens = tokenService.generateTokens({...userDto});
+        const tokens = tokenService.generateTokens({ ...userDto });
         await tokenService.saveToken(userDto.id, tokens.refreshToken);
 
         return {
@@ -96,6 +101,52 @@ class UserService {
     async getAllUsers() {
         const users = await UserModel.find();
         return users;
+    }
+
+    async addApi(key, secret, name, exchange, refreshToken) {
+        const userData = tokenService.validateRefreshToken(refreshToken);
+        const apiArray = await ApiModel.find({ key, secret });
+
+        if (apiArray.length != 0) {
+            throw ApiError.Conflict('API ключи уже существую');
+        }
+
+        await ApiModel.create({
+            user: userData.id,
+            key,
+            secret,
+            name,
+            exchange
+        });
+
+        return {
+            message: "Created"
+        }
+    }
+
+    async createBot(pair, key, deposit, refreshToken) {
+        const userData = tokenService.validateRefreshToken(refreshToken);
+        const apiData = await ApiModel.findOne({ user: userData.id, key });
+        const botData = await BotModel.findOne({});
+
+        if (!botData.pairs.includes(pair)) {
+            throw ApiError.BadRequest('Для данной торговой пары осутствует бот')
+        }
+
+
+        const userBot = await UserBotModel.create({
+            user: userData.id,
+            api: apiData.id,
+            bot: botData.id,
+            pair,
+            deposit
+        });
+
+        console.log(userBot);
+
+        return {
+            message: "Bot created"
+        }
     }
 }
 
