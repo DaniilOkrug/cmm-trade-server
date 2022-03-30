@@ -5,12 +5,14 @@ const BotShema = new Schema({
     pairs: { type: [String], required: true },
     settings: {
         algorithm: { type: String, required: true },
+        exchange: { type: String, required: true},
+        leverage: {type: Number, required: false, default: 1},
         analyzer: {
             enabled: { type: Boolean, required: true },
             period: { type: String },
             interval: { type: String },
             priceChange: { type: Number },
-            minPriceChangeNumber    : { type: Number },
+            minPriceChangeNumber: { type: Number },
             minVolume: { type: Number },
         },
         grid: {

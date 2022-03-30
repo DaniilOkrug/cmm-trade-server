@@ -14,9 +14,21 @@ router.post('/logout', userController.logout);
 router.get('/activate/:link', userController.activate);
 router.get('/refresh', userController.refresh);
 
-router.post('/addApi', authMiddleware, userController.addApi);
-router.post('/createBot', authMiddleware, userController.createBot);
 router.get('/users', authMiddleware, userController.getUsers);
-router.put('/setBotSettings', authMiddleware, userController.setBotSettings)
+router.get('/getBots', authMiddleware, userController.getBots);
+router.post('/apilist', authMiddleware, userController.getApiList);
+router.post('/addApi', authMiddleware, userController.addApi);
+router.post('/checkApi', authMiddleware, userController.checkApi);
+router.post('/deleteApi', authMiddleware, userController.deleteApi);
+router.post('/createBot', authMiddleware, userController.createBot);
+router.post('/deleteBot', authMiddleware, userController.deleteBot);
+router.post('/startBot', authMiddleware, userController.startBot);
+router.post('/stopBot', authMiddleware, userController.stopBot);
+
+router.get('/getSettings', authMiddleware, userController.getSettings);
+router.put('/setBotSettings', authMiddleware, userController.setBotSettings);
+
+//From bot service
+router.post('/botInfoUpdate', userController.botInfoUpdate);
 
 module.exports = router;

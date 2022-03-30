@@ -7,40 +7,50 @@ const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 const router = require('./router/index');
 const errorMiddleware = require('./middleware/error.middleware');
+const socketController = require('./controllers/socket.controller');
+const clientsSocketService = require('./service/clientsSocket.service');
+const http = require('http');
 
 const PORT = process.env.PORT || 5000;
 const app = express();
+const server = process.env.NODE_ENV == 'production' ? https.createServer(
+    {
+        key: fs.readFileSync("server.key"),
+        cert: fs.readFileSync("server.cert"),
+    },
+    app
+) : http.createServer(app);
+
+const io = require('socket.io')(server, {
+    cors: {
+        origin: process.env.ORIGIN,
+        methods: ['GET', 'POST'],
+    }
+});
+
 
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
     credentials: true,
-    origin: process.env.ORIGIN
+    origin: process.env.ORIGIN,
+    optionSuccessStatus: 200
 }));
 app.use('/api', router);
 app.use(errorMiddleware);
 
 const start = async () => {
     try {
-        await mongoose.connect(process.env.DB_URL, {
+        mongoose.connect(process.env.DB_URL, {
             useNewUrlParser: true,
             useUnifiedTopology: true
         });
 
-        if (process.env.NODE_ENV == 'production') {
-            https.createServer(
-                {
-                    key: fs.readFileSync("server.key"),
-                    cert: fs.readFileSync("server.cert"),
-                },
-                app
-            ).listen(PORT, () => {
-                console.log(`Server started in production mode on PORT = ${PORT}`);
-            })
+        server.listen(PORT, () => console.log(`Server started in ${process.env.NODE_ENV} mode on PORT = ${PORT}`))
 
-        } else { //development mode
-            app.listen(PORT, () => console.log(`Server started in development mode on PORT = ${PORT}`))
-        }
+        //Start websocket connection to the main server
+        socketController.connect();
+        clientsSocketService.connect(io);
     } catch (e) {
         console.log(e);
     }

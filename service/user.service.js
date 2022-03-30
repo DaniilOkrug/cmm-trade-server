@@ -9,7 +9,8 @@ const mailService = require("./mail.service");
 const tokenService = require("./token.service");
 const UserDto = require("../dtos/user.dto");
 const ApiError = require('../exceptions/api.error');
-const req = require("express/lib/request");
+const requests = require("../http");
+const userBotService = require('../service/userBot.service');
 
 class UserService {
     async registration(email, password) {
@@ -103,13 +104,54 @@ class UserService {
         return users;
     }
 
+    async getSettings() {
+        const botSettings = (await BotModel.find())[0];
+
+        const pairs = (await requests.get('/pairs')).data;
+
+        return {
+            spotPairs: pairs.spotPairs,
+            futuresPairs: pairs.futuresPairs,
+            settings: {
+                pairs: botSettings.pairs,
+                ...botSettings.settings
+            }
+        };
+    }
+
+    async getApiList(userId) {
+        const apisData = await ApiModel.find({ user: userId });
+        
+        let apiList = [];
+        for (let api of apisData) {
+            apiList.push({
+                name: api.name,
+                status: api.status,
+                exchange: api.exchange,
+                key: api.key
+            });
+        }
+
+        return apiList;
+    }
+
     async addApi(key, secret, name, exchange, refreshToken) {
         const userData = tokenService.validateRefreshToken(refreshToken);
-        const apiArray = await ApiModel.find({ key, secret });
+        const apiArrayByKeys = await ApiModel.find({ key, secret });
+        const apiArrayByName = await ApiModel.find({ name });
 
-        if (apiArray.length != 0) {
-            throw ApiError.Conflict('API ключи уже существую');
+        if (apiArrayByKeys.length != 0) {
+            throw ApiError.Conflict('API ключи уже существуют');
         }
+
+        if (apiArrayByName.length != 0) {
+            throw ApiError.Conflict('Имя API уже существует');
+        }
+
+        //Checkd api
+        const apiResponse = await requests.post('/check', { key, secret, exchange });
+
+        if (!apiResponse.data.status) throw ApiError.BadRequest(apiResponse.data.message);
 
         await ApiModel.create({
             user: userData.id,
@@ -119,34 +161,125 @@ class UserService {
             exchange
         });
 
-        return {
-            message: "Created"
-        }
+        const userApiList = await ApiModel.find({ user: userData.id });
+
+        return userApiList
     }
 
-    async createBot(pair, key, deposit, refreshToken) {
+    async deleteApi(key, refreshToken) {
+        const userData = tokenService.validateRefreshToken(refreshToken);
+
+        await ApiModel.deleteOne({ key, user: userData.id });
+
+        const userApiList = await ApiModel.find({ user: userData.id });
+
+        return userApiList;
+    }
+
+    async checkApi(key, refreshToken) {
+        const userData = tokenService.validateRefreshToken(refreshToken);
+        const apiData = await ApiModel.findOne({ key });
+
+        if (!userData) {
+            await ApiModel.updateOne({ key }, { status: "Error" });
+        }
+
+        const apiResponse = await requests.post('/check', {
+            key,
+            secret: apiData.secret,
+            exchange: apiData.exchange
+        });
+
+        if (!apiResponse.data.status) {
+            await ApiModel.updateOne({ key }, { status: "Error" });
+        }
+
+        const userApiList = await ApiModel.find({ user: userData.id });
+
+        return userApiList
+    }
+
+    async createBot(name, key, deposit, refreshToken) {
         const userData = tokenService.validateRefreshToken(refreshToken);
         const apiData = await ApiModel.findOne({ user: userData.id, key });
         const botData = await BotModel.findOne({});
 
-        if (!botData.pairs.includes(pair)) {
-            throw ApiError.BadRequest('Для данной торговой пары осутствует бот')
-        }
-
-
-        const userBot = await UserBotModel.create({
+        await UserBotModel.create({
             user: userData.id,
             api: apiData.id,
             bot: botData.id,
-            pair,
+            name,
             deposit
         });
 
-        console.log(userBot);
+        return userBotService.getBots(refreshToken);
+    }
 
-        return {
-            message: "Bot created"
+    async deleteBot(name, refreshToken) {
+        const userData = tokenService.validateRefreshToken(refreshToken);
+        const userBotData = await UserBotModel.findOne({ name, user: userData.id })
+        
+        console.log(userBotData);
+
+        if (!userBotData) {
+            throw ApiError.BadRequest('Невозможно удалить данного робота');
         }
+
+        if (userBotData.status != "Disabled") {
+            const botResponse = await requests.post('/delete', {
+                botId: userBotData._id
+            });
+
+            if (botResponse.data.status != "Disabled") {
+                throw ApiError.BadRequest('При удалении возникла ошибка');
+            }
+        }
+
+        await UserBotModel.deleteOne({ name, user: userData.id });
+
+        return userBotService.getBots(refreshToken);
+    }
+
+    async startBot(name, refreshToken) {
+        const userData = tokenService.validateRefreshToken(refreshToken);
+        const userBotData = await UserBotModel.findOne({ name, user: userData.id })
+
+        if (!userBotData) {
+            throw ApiError.BadRequest('Невозможно запустить данного робота');
+        }
+
+        const botResponse = await requests.post('/start', {
+            botId: userBotData._id
+        });
+
+        if (botResponse.data.status != "Wait") {
+            throw ApiError.BadRequest('При запуске возникла ошибка');
+        }
+
+        await UserBotModel.updateOne({ name, user: userData.id }, { status: botResponse.data.status });
+
+        return userBotService.getBots(refreshToken);
+    }
+
+    async stopBot(name, refreshToken) {
+        const userData = tokenService.validateRefreshToken(refreshToken);
+        const userBotData = await UserBotModel.findOne({ name, user: userData.id });
+
+        if (!userBotData) {
+            throw ApiError.BadRequest('Невозможно остановить данного робота. Робот отсутствует.');
+        }
+
+        const botResponse = await requests.post('/stop', {
+            botId: userBotData._id
+        });
+
+        if (botResponse.data.status != "Stopping") {
+            throw ApiError.BadRequest('При остановке возникла ошибка');
+        }
+
+        await UserBotModel.updateOne({ name, user: userData.id }, { status: botResponse.data.status });
+
+        return userBotService.getBots(refreshToken);
     }
 }
 

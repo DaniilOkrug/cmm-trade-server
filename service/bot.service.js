@@ -13,9 +13,12 @@ class BotService {
             await BotModel.findOneAndUpdate({}, { pairs, settings }, { upsert: true });
         }
 
+        const newBotSettings = (await BotModel.find())[0];
+
         return {
-            message: "Settings saved"
-        }
+            pairs: newBotSettings.pairs,
+            ...newBotSettings.settings
+        };
     }
 }
 
