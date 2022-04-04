@@ -50,7 +50,7 @@ const start = async () => {
 
         //Start websocket connection to the main server
         socketController.connect();
-        clientsSocketService.connect(io);
+        // clientsSocketService.connect(io);
     } catch (e) {
         console.log(e);
     }

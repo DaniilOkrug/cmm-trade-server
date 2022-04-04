@@ -19,11 +19,11 @@ class SocketController {
             // console.log('Bot status update: ', botData.status);
             console.log(botData);
 
-            if (botData.pair) {
-                socketService.botStatusUpdate(botData.botId, botData.status, botData.pair);
-            } else {
-                socketService.botStatusUpdate(botData.botId, botData.status);
-            }
+            // if (botData.pair) {
+            //     socketService.botStatusUpdate(botData.botId, botData.status, botData.pair);
+            // } else {
+            //     socketService.botStatusUpdate(botData.botId, botData.status);
+            // }
         });
     }
 }
