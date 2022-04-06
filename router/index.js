@@ -9,6 +9,9 @@ router.post('/registration',
     body('password').isLength({min: 8, max: 32}),
     userController.registration
 );
+
+router.get('/', () => { return "It's bot service!"});
+
 router.post('/login', userController.login);
 router.post('/logout', userController.logout);
 router.get('/activate/:link', userController.activate);
