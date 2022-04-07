@@ -107,7 +107,13 @@ class UserService {
     async getSettings() {
         const botSettings = (await BotModel.find())[0];
 
-        const pairs = (await requests.get('/pairs')).data;
+        let pairs;
+        
+        try {
+            const pairs = (await requests.get('/pairs')).data;
+        } catch (error) {
+            throw ApiError.NotFound('Сервис временно недоступен!');
+        }
 
         return {
             spotPairs: pairs.spotPairs,
