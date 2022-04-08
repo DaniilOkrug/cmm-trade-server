@@ -110,7 +110,7 @@ class UserService {
         let pairs;
         
         try {
-            const pairs = (await requests.get('/pairs')).data;
+            pairs = (await requests.get('/pairs')).data;
         } catch (error) {
             throw ApiError.NotFound('Сервис временно недоступен!');
         }
