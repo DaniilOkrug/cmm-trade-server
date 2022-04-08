@@ -116,8 +116,8 @@ class UserService {
         }
 
         return {
-            spotPairs: pairs.spotPairs,
-            futuresPairs: pairs.futuresPairs,
+            spotPairs: pairs.spotPairs.filter(pair => pair.includes('BUSD')),
+            futuresPairs: pairs.futuresPairs.filter(pair => pair.includes('BUSD')),
             settings: {
                 pairs: botSettings.pairs,
                 ...botSettings.settings
