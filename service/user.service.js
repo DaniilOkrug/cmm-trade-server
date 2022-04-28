@@ -108,26 +108,29 @@ class UserService {
         const botSettings = (await BotModel.find())[0];
 
         let pairs;
-        
+
         try {
             pairs = (await requests.get('/pairs')).data;
         } catch (error) {
             throw ApiError.NotFound('Сервис временно недоступен!');
         }
 
-        return {
+        const settings = JSON.parse(JSON.stringify(botSettings.settings)); //Deep copy of the object
+        settings.pairs = botSettings.pairs;
+
+        const response = {
             spotPairs: pairs.spotPairs.filter(pair => pair.includes('BUSD')),
             futuresPairs: pairs.futuresPairs.filter(pair => pair.includes('BUSD')),
-            settings: {
-                pairs: botSettings.pairs,
-                ...botSettings.settings
-            }
+            timeframes: ['1m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', '6h', '8h', '12h', '1d', '3d', '1w', '1M'],
+            settings
         };
+
+        return response;
     }
 
     async getApiList(userId) {
         const apisData = await ApiModel.find({ user: userId });
-        
+
         let apiList = [];
         for (let api of apisData) {
             apiList.push({
@@ -224,7 +227,7 @@ class UserService {
     async deleteBot(name, refreshToken) {
         const userData = tokenService.validateRefreshToken(refreshToken);
         const userBotData = await UserBotModel.findOne({ name, user: userData.id })
-        
+
         console.log(userBotData);
 
         if (!userBotData) {

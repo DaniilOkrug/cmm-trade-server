@@ -231,6 +231,27 @@ class UserController {
             next(e);
         }
     }
+
+    async getBlackList(req, res, next) {
+        try {
+            const blackList = await botService.getBlackList();
+
+            return res.json(blackList);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async setBlackList(req, res, next) {
+        try {
+            const { blacklist } = req.body;
+            const newBlackList = await botService.setBlackList(blacklist);
+
+            return res.json(newBlackList);
+        } catch (e) {
+            next(e);
+        }
+    }
 }
 
 module.exports = new UserController();
