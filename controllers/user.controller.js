@@ -204,6 +204,18 @@ class UserController {
         }
     }
 
+    async stopAllBots(req, res, next) {
+        try {
+            const { refreshToken } = req.cookies;
+
+            const response = await userService.stopAllBots(refreshToken);
+
+            return res.json(response);
+        } catch (e) {
+            next(e);
+        }
+    }
+
     async botInfoUpdate(req, res, next) {
         try {
             const { botId, status } = req.body;

@@ -7,6 +7,7 @@ const UserBotShema = new Schema({
     name: { type: String, required: true },
     deposit: { type: Number, required: true },
     status: { type: String, default: "Disabled" },
+    error: { type: String, default: '-' },
     pair: { type: String },
 });
 

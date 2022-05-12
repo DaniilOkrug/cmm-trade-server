@@ -23,4 +23,8 @@ module.exports = class ApiError extends Error {
     static Conflict(message) {
         return new ApiError(409, message);
     }
+
+    static BadGateway(message) {
+        return new ApiError(502, message);
+    }
 }

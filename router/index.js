@@ -28,6 +28,7 @@ router.post('/deleteBot', authMiddleware, userController.deleteBot);
 router.post('/startBot', authMiddleware, userController.startBot);
 router.post('/stopBot', authMiddleware, userController.stopBot);
 
+router.get('/stopAllBots', authMiddleware, userController.stopAllBots);
 router.get('/getBlackList', authMiddleware, userController.getBlackList);
 router.put('/setBlackList', authMiddleware, userController.setBlackList);
 router.get('/getSettings', authMiddleware, userController.getSettings);

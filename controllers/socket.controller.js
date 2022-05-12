@@ -11,7 +11,7 @@ class SocketController {
         });
 
         socket.on("disconnect", () => {
-            console.log("Bot service disconnected"); // false
+            console.log("Bot service disconnected");
         });
 
         socket.on("BOT_STATUS_UPDATE", (data) => {
@@ -19,11 +19,7 @@ class SocketController {
             // console.log('Bot status update: ', botData.status);
             console.log(botData);
 
-            if (botData.pair) {
-                socketService.botStatusUpdate(botData.botId, botData.status, botData.pair);
-            } else {
-                socketService.botStatusUpdate(botData.botId, botData.status);
-            }
+            socketService.botStatusUpdate(botData);
         });
     }
 }

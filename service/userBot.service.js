@@ -13,7 +13,10 @@ class UserBotService {
         let botList = [];
         if (userBots.length != 0) {
             const botSettings = (await BotModel.find())[0];
-            userBots.forEach(bot => {
+            
+            for (const bot of userBots) {
+                const botAPI = await ApiModel.findById(bot.api);
+
                 botList.push({
                     name: bot.name,
                     pair: typeof bot.pair === 'undefined' ? '' : bot.pair,
@@ -21,10 +24,13 @@ class UserBotService {
                     deposit: bot.deposit,
                     exchange: botSettings.settings.exchange,
                     profit: 0,
-                    error: '-'
+                    API: botAPI.name,
+                    error: bot.error
                 });
-            });
+            }
         }
+
+        console.log(botList);
 
         return botList;
     }

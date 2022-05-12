@@ -158,7 +158,7 @@ class UserService {
         }
 
         //Checkd api
-        const apiResponse = await requests.post('/check', { key, secret, exchange });
+        const apiResponse = await requests.post('/checkApi', { key, secret, exchange });
 
         if (!apiResponse.data.status) throw ApiError.BadRequest(apiResponse.data.message);
 
@@ -193,14 +193,22 @@ class UserService {
             await ApiModel.updateOne({ key }, { status: "Error" });
         }
 
-        const apiResponse = await requests.post('/check', {
-            key,
-            secret: apiData.secret,
-            exchange: apiData.exchange
-        });
+        let apiResponse;
+        try {
+            apiResponse = await requests.post('/checkApi', {
+                key,
+                secret: apiData.secret,
+                exchange: apiData.exchange
+            });
+        } catch (error) {
+            throw ApiError.BadGateway('Ошбика проверки API. Внутренняя ошибка сервера.');
+        }
+
 
         if (!apiResponse.data.status) {
+            console.log(apiResponse);
             await ApiModel.updateOne({ key }, { status: "Error" });
+            throw ApiError.BadGateway('Ошбика проверки API. Внутренняя ошибка сервера.');
         }
 
         const userApiList = await ApiModel.find({ user: userData.id });
@@ -211,6 +219,12 @@ class UserService {
     async createBot(name, key, deposit, refreshToken) {
         const userData = tokenService.validateRefreshToken(refreshToken);
         const apiData = await ApiModel.findOne({ user: userData.id, key });
+        const userBotsWithSameName = await UserBotModel.find({ api: apiData.id, name });
+
+        if (userBotsWithSameName.length > 0) {
+            throw ApiError.Conflict('Робот с таким именем уже существует!');
+        }
+
         const botData = await BotModel.findOne({});
 
         await UserBotModel.create({
@@ -282,13 +296,22 @@ class UserService {
             botId: userBotData._id
         });
 
-        if (botResponse.data.status != "Stopping") {
+        if (botResponse.data.status != "Stopping" && botResponse.data.status != "Disabled") {
             throw ApiError.BadRequest('При остановке возникла ошибка');
         }
 
         await UserBotModel.updateOne({ name, user: userData.id }, { status: botResponse.data.status });
 
         return userBotService.getBots(refreshToken);
+    }
+
+    async stopAllBots(refreshToken) {
+        const userData = tokenService.validateRefreshToken(refreshToken);
+        const userBotsData = await UserBotModel.find({ user: userData.id });
+
+        const stopBotResponse = await requests.post('/stopAll', userBotsData.map(bot => bot._id));
+
+        return stopBotResponse.data;
     }
 }
 
