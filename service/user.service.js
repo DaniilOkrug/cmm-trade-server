@@ -99,6 +99,20 @@ class UserService {
         }
     }
 
+    async sendEmailConfirmation(refreshToken) {
+        const userData = tokenService.validateRefreshToken(refreshToken);
+        if (!userData) throw ApiError.BadRequest('Пользователь не найден!');
+
+        const activationLink = uuid.v4();
+        await UserModel.findByIdAndUpdate(userData.id, { activationLink });
+
+        await mailService.sendActivationMail(userData.email, `${process.env.API_URL}/api/activate/${activationLink}`);
+
+        const user = new UserDto(await UserModel.findById(userData.id));
+
+        return user
+    }
+
     async getAllUsers() {
         const users = await UserModel.find();
         return users;
@@ -146,6 +160,9 @@ class UserService {
 
     async addApi(key, secret, name, exchange, refreshToken) {
         const userData = tokenService.validateRefreshToken(refreshToken);
+        if (!userData) throw ApiError.NotFound('Пользуватель не найден!');
+        if (!userData.isActivated) throw ApiError.BadRequest('Почта не подтверждена!');
+
         const apiArrayByKeys = await ApiModel.find({ key, secret });
         const apiArrayByName = await ApiModel.find({ name });
 
@@ -218,12 +235,14 @@ class UserService {
 
     async createBot(name, key, deposit, refreshToken) {
         const userData = tokenService.validateRefreshToken(refreshToken);
-        const apiData = await ApiModel.findOne({ user: userData.id, key });
-        const userBotsWithSameName = await UserBotModel.find({ api: apiData.id, name });
+        if (!userData) throw ApiError.NotFound('Пользуватель не найден!');
+        if (!userData.isActivated) throw ApiError.BadRequest('Почта не подтверждена!');
 
-        if (userBotsWithSameName.length > 0) {
-            throw ApiError.Conflict('Робот с таким именем уже существует!');
-        }
+        const apiData = await ApiModel.findOne({ user: userData.id, key });
+        if (!apiData) throw ApiError.BadRequest('Добавьте API ключ!');
+
+        const userBotsWithSameName = await UserBotModel.find({ api: apiData.id, name });
+        if (userBotsWithSameName.length > 0) throw ApiError.Conflict('Робот с таким именем уже существует!');
 
         const botData = await BotModel.findOne({});
 

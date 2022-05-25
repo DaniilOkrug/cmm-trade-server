@@ -1,4 +1,6 @@
 const nodemailer = require('nodemailer');
+const ApiError = require('../exceptions/api.error');
+const userModel = require('../models/user.model');
 
 class MailService {
 
@@ -28,6 +30,19 @@ class MailService {
                     </div>
                 `
         })
+    }
+
+    async confirmEmail(activationLink) {
+        const userData = await userModel.findOne({ activationLink });
+
+        if (!userData)
+            return new ApiError.NotFound('Пользователь не найден!');
+
+        await userModel.findByIdAndUpdate(userData._id, { isActivated: true });
+
+        return {
+            msg: 'Ваша почта подтверждена!'
+        }
     }
 }
 

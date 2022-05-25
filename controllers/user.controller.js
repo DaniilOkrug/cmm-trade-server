@@ -53,7 +53,18 @@ class UserController {
             const activationLink = req.params.link;
             await userService.activate(activationLink);
 
-            return res.redirect('https://ya.ru/');
+            return res.redirect(process.env.CLIENT_URL);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async getEmailConfirmLetter(req, res, next) {
+        try {
+            const { refreshToken } = req.cookies;
+            const userData = await userService.sendEmailConfirmation(refreshToken);
+
+            return res.json(userData);
         } catch (e) {
             next(e);
         }
@@ -194,7 +205,7 @@ class UserController {
     async stopBot(req, res, next) {
         try {
             const { name } = req.body;
-            const { refreshToken } = req.cookies;   
+            const { refreshToken } = req.cookies;
 
             const botList = await userService.stopBot(name, refreshToken);
 

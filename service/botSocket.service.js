@@ -20,10 +20,12 @@ class SocketService {
                 });
                 break;
             case 'Error':
+                let errorMessage = replaceAll(botData.error, 'MongooseError: ', '');
+                errorMessage = replaceAll(botData.error, 'Error: ', '');
                 await userBotModel.findByIdAndUpdate(botData.botId, {
                     status: botData.status,
                     pair: botData.pair,
-                    error: replaceAll(botData.error, 'MongooseError: ', '')
+                    error: errorMessage
                 });
                 break;
             default:
