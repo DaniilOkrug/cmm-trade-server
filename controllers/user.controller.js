@@ -1,3 +1,4 @@
+const path = require('path');
 const { validationResult } = require('express-validator');
 const ApiError = require('../exceptions/api.error');
 const userService = require('../service/user.service');
@@ -53,7 +54,7 @@ class UserController {
             const activationLink = req.params.link;
             await userService.activate(activationLink);
 
-            return res.redirect(process.env.CLIENT_URL);
+            return res.sendFile(path.join(__dirname, '../html/emailConfigrmed.html'));
         } catch (e) {
             next(e);
         }
