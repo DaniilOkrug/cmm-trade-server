@@ -11,6 +11,7 @@ const UserDto = require("../dtos/user.dto");
 const ApiError = require('../exceptions/api.error');
 const requests = require("../http");
 const userBotService = require('../service/userBot.service');
+const ApiDto = require("../dtos/api.dto");
 
 class UserService {
     async registration(email, password) {
@@ -207,7 +208,8 @@ class UserService {
         const apiData = await ApiModel.findOne({ key });
 
         if (!userData) {
-            await ApiModel.updateOne({ key }, { status: "Error" });
+            await ApiModel.findByIdAndUpdate(apiData._id, { status: "Error" });
+            throw ApiError.BadRequest('Пользователь не найден!');
         }
 
         let apiResponse;
@@ -224,11 +226,12 @@ class UserService {
 
         if (!apiResponse.data.status) {
             console.log(apiResponse);
-            await ApiModel.updateOne({ key }, { status: "Error" });
+            await ApiModel.findByIdAndUpdate(apiData._id, { status: "Error" });
             throw ApiError.BadGateway('Ошбика проверки API. Внутренняя ошибка сервера.');
         }
 
-        const userApiList = await ApiModel.find({ user: userData.id });
+        await ApiModel.findByIdAndUpdate(apiData._id, { status: 'Active'});
+        const userApiList = (await ApiModel.find({ user: userData.id })).map(api => new ApiDto(api));
 
         return userApiList
     }
