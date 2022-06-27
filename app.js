@@ -10,6 +10,7 @@ const errorMiddleware = require('./middleware/error.middleware');
 const socketController = require('./controllers/socket.controller');
 const clientsSocketService = require('./service/clientsSocket.service');
 const http = require('http');
+const binanceChain = require('./workers/BinanceChain');
 
 const PORT = process.env.PORT || 5000;
 const app = express();
@@ -51,6 +52,8 @@ const start = async () => {
         //Start websocket connection to the main server
         socketController.connect();
         // clientsSocketService.connect(io);
+
+        binanceChain.createWorker();
     } catch (e) {
         console.log(e);
     }

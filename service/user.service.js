@@ -230,7 +230,7 @@ class UserService {
             throw ApiError.BadGateway('Ошбика проверки API. Внутренняя ошибка сервера.');
         }
 
-        await ApiModel.findByIdAndUpdate(apiData._id, { status: 'Active'});
+        await ApiModel.findByIdAndUpdate(apiData._id, { status: 'Active' });
         const userApiList = (await ApiModel.find({ user: userData.id })).map(api => new ApiDto(api));
 
         return userApiList
@@ -334,6 +334,17 @@ class UserService {
         const stopBotResponse = await requests.post('/stopAll', userBotsData.map(bot => bot._id));
 
         return stopBotResponse.data;
+    }
+
+    async deposit(userId, amount) {
+        const userData = await UserModel.findById(userId);
+        console.log(userData);
+
+        if (!userData) return;
+
+        await UserModel.findByIdAndUpdate(userId, { balance: userData.balance + Number(amount) });
+
+        return;
     }
 }
 
