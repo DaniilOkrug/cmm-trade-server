@@ -337,14 +337,19 @@ class UserService {
     }
 
     async deposit(userId, amount) {
-        const userData = await UserModel.findById(userId);
-        console.log(userData);
+        try {
+            const userData = await UserModel.findById(userId);
+            console.log(userData);
 
-        if (!userData) return;
+            if (!userData) return;
 
-        await UserModel.findByIdAndUpdate(userId, { balance: userData.balance + Number(amount) });
+            await UserModel.findByIdAndUpdate(userId, { balance: userData.balance + Number(amount) });
 
-        return;
+            return;
+        } catch (err) {
+            console.log(err);
+            return;
+        }
     }
 }
 
