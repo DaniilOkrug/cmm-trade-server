@@ -35,7 +35,7 @@ client.chooseNetwork("mainnet");
                         txHash: transaction.txHash,
                         txAsset: transaction.txAsset,
                         value: transaction.value,
-                        memo: transaction.memo,
+                        memo: transaction.memo === '' ? 'EMPTY_MEMO' : transaction.memo,
                         fromAddr: transaction.fromAddr,
                         toAddr: transaction.toAddr,
                         timeStamp: transaction.timeStamp
